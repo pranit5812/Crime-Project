@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: AI Crime Reporting & Analysis Dashboard
 emoji: ??
@@ -155,3 +156,6 @@ Baseline total score: ...
 - Charts (Bar / Pie / Line) with live API data
 - Risk-zone cards with color-coded severity
 - Responsive layout for desktop/tablet/mobile
+=======
+# Project-1
+>>>>>>> cb31f59757dd7bc5468fff23f039e41d7d86c8a9
