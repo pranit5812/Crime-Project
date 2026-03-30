@@ -6,3 +6,5 @@
 .env
 backend/crime_reports.db
 backend/uploads/
+node_modules/
+build/
