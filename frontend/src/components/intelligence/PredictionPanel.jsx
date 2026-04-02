@@ -42,49 +42,54 @@ export function PredictionPanel({ selectedState, region, time, ampm, form }) {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold flex items-center gap-2">
-          <AlertTriangle className="text-amber-300" size={18} /> AI Prediction
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 space-y-3">
+      <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <AlertTriangle className="shrink-0 text-amber-500 dark:text-amber-300" size={17} />
+          <span className="leading-tight">AI Prediction</span>
         </h3>
-        <button type="button" onClick={runPredict} className="text-xs px-3 py-1 rounded-lg bg-sky-500/25 hover:bg-sky-500/35 dark:bg-sky-500/25">
+        <button
+          type="button"
+          onClick={runPredict}
+          className="shrink-0 self-start rounded-lg border border-sky-400/35 bg-sky-500/15 px-3 py-1.5 text-xs font-semibold text-sky-800 dark:text-sky-100 hover:bg-sky-500/25 dark:border-sky-400/30 dark:bg-sky-500/20"
+        >
           {loading ? "…" : "Run"}
         </button>
       </div>
-      <div className="text-xs text-slate-600 dark:text-slate-300 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 border border-slate-300/60 dark:border-white/10">
-          <MapPin size={12} /> High-risk zones
+      <div className="flex w-full min-w-0 flex-col gap-1.5">
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-100/90 px-2 py-1 text-[10px] text-slate-700 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-300">
+          <MapPin size={11} className="shrink-0 opacity-80" /> High-risk zones
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 border border-slate-300/60 dark:border-white/10">
-          <Clock size={12} /> Time-aware
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-100/90 px-2 py-1 text-[10px] text-slate-700 dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-300">
+          <Clock size={11} className="shrink-0 opacity-80" /> Time-aware
         </span>
       </div>
-      <ul className="space-y-2 max-h-40 overflow-auto text-sm">
+      <ul className="max-h-44 w-full min-w-0 space-y-2 overflow-y-auto overflow-x-hidden pr-0.5 text-xs">
         {zones.map((z) => (
           <li
             key={z.region}
-            className={`flex justify-between rounded-lg px-2 py-1 border ${
+            className={`flex w-full min-w-0 flex-col gap-1 rounded-lg border px-2.5 py-2 ${
               z.risk_level === "High"
-                ? "border-rose-500/50 bg-rose-500/10"
+                ? "border-rose-400/45 bg-rose-500/[0.08] dark:border-rose-500/40 dark:bg-rose-500/10"
                 : z.risk_level === "Medium"
-                  ? "border-amber-500/40 bg-amber-500/10"
-                  : "border-white/10 bg-slate-900/30 dark:bg-slate-900/30 bg-slate-100/80"
+                  ? "border-amber-400/45 bg-amber-500/[0.08] dark:border-amber-500/40 dark:bg-amber-500/10"
+                  : "border-slate-200/80 bg-slate-50/90 dark:border-white/10 dark:bg-slate-900/40"
             }`}
           >
-            <span>{z.region}</span>
-            <span className="text-xs opacity-90">
-              ⚠️ {z.risk_level} · {z.reports} cases · {(z.confidence * 100).toFixed(0)}%
+            <span className="truncate font-medium text-slate-800 dark:text-slate-100">{z.region}</span>
+            <span className="text-[10px] leading-snug text-slate-600 dark:text-slate-300/90">
+              {z.risk_level} · {z.reports} cases · {(z.confidence * 100).toFixed(0)}%
             </span>
           </li>
         ))}
       </ul>
-      {live && (
-        <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-2 text-sm space-y-1">
-          <div className="font-medium">Current selection risk: {live.risk_level}</div>
-          <div className="text-xs opacity-80">Confidence: {live.confidence}</div>
-          <div className="text-[11px] opacity-70">Model: {live.model}</div>
+      {live ? (
+        <div className="w-full min-w-0 rounded-lg border border-sky-400/35 bg-sky-500/10 p-2.5 text-xs dark:border-sky-500/30">
+          <div className="font-medium text-slate-800 dark:text-slate-100">Risk: {live.risk_level}</div>
+          <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">Confidence: {live.confidence}</div>
+          <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-500">Model: {live.model}</div>
         </div>
-      )}
+      ) : null}
     </motion.div>
   );
 }

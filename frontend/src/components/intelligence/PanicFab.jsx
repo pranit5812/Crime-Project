@@ -18,7 +18,10 @@ async function captureSnapshotBlob() {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
 }
 
-export function PanicFab({ onStatus }) {
+/**
+ * @param {{ onStatus?: (msg: string, type?: string) => void, variant?: "fab" | "header" }} props
+ */
+export function PanicFab({ onStatus, variant = "fab" }) {
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
@@ -57,15 +60,22 @@ export function PanicFab({ onStatus }) {
     }
   };
 
+  const isHeader = variant === "header";
+
   return (
     <button
       type="button"
       disabled={busy}
       onClick={run}
-      className="fixed bottom-6 right-6 z-[500] flex items-center gap-2 px-5 py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-2xl shadow-rose-900/50 border border-rose-400/60 disabled:opacity-60 animate-pulse"
+      title="Send emergency alert with your location"
+      className={
+        isHeader
+          ? "inline-flex items-center gap-2 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold text-white border-2 border-amber-200/50 shadow-lg shadow-orange-900/20 disabled:opacity-60 transition-all hover:brightness-110 active:scale-[0.98] bg-gradient-to-r from-amber-500 via-orange-600 to-rose-600 hover:from-amber-400 hover:via-orange-500 hover:to-rose-500"
+          : "fixed bottom-5 left-5 z-[540] flex items-center gap-2 px-5 py-4 rounded-2xl font-bold text-white border-2 border-fuchsia-300/40 shadow-2xl shadow-violet-900/35 disabled:opacity-60 animate-pulse bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-rose-500"
+      }
     >
-      <AlertOctagon size={22} />
-      {busy ? "Sending…" : "PANIC"}
+      <AlertOctagon size={isHeader ? 18 : 22} className="shrink-0" />
+      {busy ? "Sending…" : isHeader ? "Emergency" : "PANIC"}
     </button>
   );
 }

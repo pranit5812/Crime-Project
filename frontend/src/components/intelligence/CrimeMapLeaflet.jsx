@@ -17,9 +17,35 @@ function HeatLayer({ points }) {
   return null;
 }
 
-export function CrimeMapLeaflet({ selectedState, blinkKey, refreshKey = 0 }) {
+/** Calls invalidateSize so tiles render correctly inside flex/sidebar layouts. */
+function MapResize({ trigger = 0 }) {
+  const map = useMap();
+  useEffect(() => {
+    const fix = () => {
+      map.invalidateSize({ animate: false });
+    };
+    fix();
+    const r1 = requestAnimationFrame(fix);
+    const t1 = setTimeout(fix, 120);
+    const t2 = setTimeout(fix, 400);
+    window.addEventListener("resize", fix);
+    return () => {
+      cancelAnimationFrame(r1);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", fix);
+    };
+  }, [map, trigger]);
+  return null;
+}
+
+/**
+ * @param {{ selectedState: string, blinkKey?: string | null, refreshKey?: number, variant?: "default" | "sidebar" }} props
+ */
+export function CrimeMapLeaflet({ selectedState, blinkKey, refreshKey = 0, variant = "default" }) {
   const [incidents, setIncidents] = useState([]);
   const center = [20.5937, 78.9629];
+  const sidebar = variant === "sidebar";
 
   useEffect(() => {
     let cancel = false;
@@ -41,12 +67,33 @@ export function CrimeMapLeaflet({ selectedState, blinkKey, refreshKey = 0 }) {
     [incidents]
   );
 
+  const blinkCls = blinkKey
+    ? "ring-2 ring-rose-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 animate-pulse"
+    : "";
+
+  const shellCls = sidebar
+    ? `crime-map-leaflet crime-map-leaflet--sidebar relative w-full overflow-hidden rounded-xl ${blinkCls}`
+    : `crime-map-leaflet relative w-full overflow-hidden rounded-xl border border-slate-200/80 shadow-md dark:border-white/10 dark:shadow-glow ${blinkCls}`;
+
+  const shellStyle = sidebar
+    ? {
+        height: "clamp(220px, 46vh, 320px)",
+        minHeight: 220
+      }
+    : { height: 320 };
+
   return (
-    <div
-      className={`rounded-xl overflow-hidden border border-white/10 dark:border-white/10 border-slate-200 shadow-glow transition ${blinkKey ? "ring-2 ring-rose-400 ring-offset-2 ring-offset-slate-900 animate-pulse" : ""}`}
-      style={{ height: 320 }}
-    >
-      <MapContainer center={center} zoom={5} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+    <div className={shellCls} style={shellStyle}>
+      <MapContainer
+        center={center}
+        zoom={sidebar ? 4.85 : 5}
+        zoomControl
+        attributionControl
+        scrollWheelZoom
+        className="z-0 h-full w-full rounded-xl [&_.leaflet-control-zoom]:border-slate-200/80 [&_.leaflet-control-zoom]:dark:border-white/10 [&_.leaflet-control-zoom_a]:text-slate-700 [&_.leaflet-control-zoom_a]:dark:text-slate-200 [&_.leaflet-control-attribution]:text-[9px] [&_.leaflet-control-attribution]:max-w-none"
+        style={{ height: "100%", width: "100%" }}
+      >
+        <MapResize trigger={refreshKey} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -64,7 +111,7 @@ export function CrimeMapLeaflet({ selectedState, blinkKey, refreshKey = 0 }) {
             }}
           >
             <Popup>
-              <div className="text-xs space-y-1 min-w-[160px]">
+              <div className="min-w-[160px] space-y-1 text-xs">
                 <div className="font-semibold">{i.crime_type}</div>
                 <div>
                   {i.region}, {i.state}

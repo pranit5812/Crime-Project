@@ -74,7 +74,7 @@ export function Chatbot({ onAutoFill, onUrgent }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 left-6 z-[500] p-4 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl border border-indigo-300/50"
+        className="fixed bottom-5 right-5 z-[550] p-4 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl border border-indigo-300/50"
       >
         <MessageCircle size={22} />
       </button>
@@ -84,7 +84,7 @@ export function Chatbot({ onAutoFill, onUrgent }) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
-            className="fixed bottom-24 left-6 z-[500] w-[min(100vw-2rem,420px)] glass p-3 flex flex-col gap-2 max-h-[520px]"
+            className="fixed bottom-[5.25rem] right-5 z-[550] w-[min(100vw-2.5rem,420px)] glass p-3 flex flex-col gap-2 max-h-[520px]"
           >
             <div className="text-sm font-semibold">AI Crime Assistant</div>
 

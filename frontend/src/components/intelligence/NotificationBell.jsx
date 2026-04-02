@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+﻿import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { apiGet, apiPost } from "../../lib/api";
@@ -64,28 +64,35 @@ export function NotificationBell() {
       <>
         <button
           type="button"
-          className="fixed inset-0 z-[10000] cursor-default bg-black/30"
+          className="fixed inset-0 z-[10000] cursor-default bg-slate-950/35"
           aria-label="Close notifications"
           onClick={() => setOpen(false)}
         />
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed z-[10001] w-80 max-h-[min(24rem,70vh)] overflow-auto text-sm shadow-2xl rounded-xl border border-slate-200/70 bg-white/90 text-slate-900 dark:border-white/15 dark:bg-slate-900/80 dark:text-slate-100 backdrop-blur-xl"
+          className="fixed z-[10001] w-[22rem] max-h-[min(26rem,72vh)] overflow-auto rounded-2xl border border-white/20 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-2xl text-sm shadow-2xl"
           style={{ top: panelPos.top, right: panelPos.right }}
         >
+          <div className="sticky top-0 z-10 px-4 py-3 border-b border-white/10 bg-slate-900/85 backdrop-blur-md">
+            <div className="text-xs uppercase tracking-wide text-slate-300/90">Notifications</div>
+          </div>
           {items.length === 0 ? (
-            <div className="p-3 text-slate-600 dark:text-slate-400">No notifications</div>
+            <div className="p-4 text-slate-300">No notifications</div>
           ) : (
             items.map((n) => (
               <button
                 key={n.id}
                 type="button"
                 onClick={() => mark(n.id)}
-                className={`w-full text-left p-3 border-b border-slate-200/60 dark:border-white/10 last:border-b-0 hover:bg-slate-100/70 dark:hover:bg-white/10 transition-colors ${n.read ? "opacity-70" : "bg-amber-500/10"}`}
+                className={`w-full text-left p-3.5 border-b border-white/10 transition last:border-b-0 ${
+                  n.read
+                    ? "bg-white/[0.02] hover:bg-white/[0.05]"
+                    : "bg-sky-400/10 hover:bg-sky-400/15"
+                }`}
               >
-                <div className="font-medium text-slate-900 dark:text-slate-100">{n.title}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-300">{n.body}</div>
+                <div className={`font-semibold ${n.read ? "text-slate-100/85" : "text-white"}`}>{n.title}</div>
+                <div className="mt-1 text-xs leading-5 text-slate-200/90">{n.body}</div>
               </button>
             ))
           )}

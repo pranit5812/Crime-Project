@@ -31,7 +31,7 @@ def _send_otp_email(to_email: str, otp: str) -> None:
         return
 
     msg = EmailMessage()
-    msg["Subject"] = "Your OTP for AI Crime Intelligence Platform"
+    msg["Subject"] = "Your OTP for CRIMEWATCH AI Platform"
     msg["From"] = smtp_from
     msg["To"] = to_email
     msg.set_content(f"Your OTP is {otp}. It is valid for 10 minutes.")

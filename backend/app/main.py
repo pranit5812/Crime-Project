@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AI Crime Intelligence Platform",
+    title="CRIMEWATCH AI ",
     version="3.0.0",
     lifespan=lifespan,
 )

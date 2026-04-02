@@ -3,9 +3,9 @@ import { ClipboardList } from "lucide-react";
 import { apiGet, apiPatch } from "../../lib/api";
 
 const statusColors = {
-  pending: "bg-amber-500/20 text-amber-200",
-  investigating: "bg-sky-500/20 text-sky-200",
-  resolved: "bg-emerald-500/20 text-emerald-200"
+  pending: "bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500/25",
+  investigating: "bg-sky-500/20 text-sky-800 dark:text-sky-200 border-sky-500/25",
+  resolved: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border-emerald-500/25"
 };
 
 export function ReportTracking({ role, onNotify, refreshTrigger = 0 }) {
@@ -37,33 +37,45 @@ export function ReportTracking({ role, onNotify, refreshTrigger = 0 }) {
   if (!localStorage.getItem("crime_token")) return null;
 
   return (
-    <div className="glass p-4 space-y-2">
-      <div className="font-semibold flex items-center gap-2">
-        <ClipboardList size={18} /> My reports
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-2.5">
+      <div className="flex w-full min-w-0 items-center gap-2 border-b border-slate-200/60 pb-2 dark:border-white/10">
+        <ClipboardList size={17} className="shrink-0 text-sky-600 dark:text-sky-400" />
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">My reports</span>
       </div>
-      <div className="max-h-48 overflow-auto space-y-2 text-xs">
-        {rows.length === 0 && <div className="opacity-60">No tracked reports yet. Submit with login to attach ID.</div>}
+      <div className="min-h-0 max-h-52 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pr-0.5 text-xs">
+        {rows.length === 0 ? (
+          <p className="text-left text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+            No reports yet. Submit while logged in to track IDs here.
+          </p>
+        ) : null}
         {rows.map((r) => (
-          <div key={r.report_id} className="rounded-lg border border-white/10 p-2 space-y-1">
-            <div className="flex justify-between gap-2">
-              <span className="font-mono truncate">{r.report_id}</span>
-              <span className={`px-2 py-0.5 rounded ${statusColors[r.status] || ""}`}>{r.status}</span>
+          <div
+            key={r.report_id}
+            className="w-full min-w-0 space-y-1.5 rounded-xl border border-slate-200/80 bg-slate-50/80 p-2.5 dark:border-white/10 dark:bg-slate-800/40"
+          >
+            <div className="flex w-full min-w-0 items-start justify-between gap-2">
+              <span className="min-w-0 truncate font-mono text-[10px] text-slate-700 dark:text-slate-300">{r.report_id}</span>
+              <span
+                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize ${statusColors[r.status] || "border-slate-200 text-slate-600 dark:border-white/10 dark:text-slate-300"}`}
+              >
+                {r.status}
+              </span>
             </div>
-            <div className="text-slate-300/90">
+            <div className="text-left text-[11px] text-slate-700 dark:text-slate-300">
               {r.crime_type}
               {r.created_at ? (
-                <span className="block text-[10px] text-slate-400 mt-0.5">
-                  Submitted {new Date(r.created_at).toLocaleString()}
+                <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-500">
+                  {new Date(r.created_at).toLocaleString()}
                 </span>
               ) : null}
             </div>
             {(role === "police" || role === "admin") && (
-              <div className="flex flex-wrap gap-1 pt-1">
+              <div className="flex flex-wrap gap-1 pt-0.5">
                 {["pending", "investigating", "resolved"].map((s) => (
                   <button
                     key={s}
                     type="button"
-                    className="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-600 text-[10px]"
+                    className="rounded-md bg-slate-200/90 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-300/90 dark:bg-slate-700/80 dark:text-slate-200 dark:hover:bg-slate-600/80"
                     onClick={() => updateStatus(r.report_id, s)}
                   >
                     {s}
