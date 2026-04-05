@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,10 +9,11 @@ import {
   Car, Bike, Truck, ShieldAlert, RotateCcw, LogOut, UploadCloud,
   Sparkles, Sun, Moon, Radio, MapPinned, Menu, X, Zap, Shield,
   AlertTriangle, Activity, TrendingUp, BarChart2, FileText,
-  Mic, Phone, Clock, MapPin, ChevronRight
+  Mic, Phone, Clock, MapPin, ChevronRight, Newspaper, ExternalLink,
+  Flame, TrendingDown, Eye, RefreshCw, Wifi, WifiOff, ChevronDown
 } from "lucide-react";
 import { CrimeMapLeaflet } from "../components/intelligence/CrimeMapLeaflet";
-import { PredictionPanel } from "../components/intelligence/PredictionPanel";
+import { CrimePredictionPanel } from "../components/intelligence/CrimePredictionPanel";
 import { VoiceFill } from "../components/intelligence/VoiceFill";
 import { PanicFab } from "../components/intelligence/PanicFab";
 import { Chatbot } from "../components/intelligence/Chatbot";
@@ -46,6 +47,280 @@ const riskStyle = {
   Medium: "risk-medium",
   Low: "risk-low",
 };
+
+/* ── Static crime news data (simulates live feed) ─────────── */
+const CRIME_NEWS_ITEMS = [
+  {
+    id: 1, category: "Breaking", severity: "high",
+    headline: "Armed robbery foiled near Connaught Place, 2 arrested",
+    source: "Times of India", time: "2 min ago", region: "Delhi",
+    icon: "🚨", views: "4.2K",
+  },
+  {
+    id: 2, category: "Cybercrime", severity: "medium",
+    headline: "Phishing gang busted in Hyderabad; ₹12 crore recovered",
+    source: "Deccan Chronicle", time: "8 min ago", region: "Hyderabad",
+    icon: "💻", views: "3.1K",
+  },
+  {
+    id: 3, category: "Arrest", severity: "low",
+    headline: "Serial chain-snatcher caught after 3-month hunt in Chennai",
+    source: "The Hindu", time: "15 min ago", region: "Chennai",
+    icon: "🔗", views: "2.8K",
+  },
+  {
+    id: 4, category: "Alert", severity: "high",
+    headline: "Drug trafficking network dismantled; 500kg narcotics seized",
+    source: "NDTV", time: "22 min ago", region: "Mumbai",
+    icon: "💊", views: "6.7K",
+  },
+  {
+    id: 5, category: "Investigation", severity: "medium",
+    headline: "Multi-crore bank fraud under probe in Bengaluru tech hub",
+    source: "Hindustan Times", time: "34 min ago", region: "Bengaluru",
+    icon: "🏦", views: "1.9K",
+  },
+  {
+    id: 6, category: "Breaking", severity: "high",
+    headline: "Kidnapping case: Victim recovered safe, 3 held in Lucknow",
+    source: "Aaj Tak", time: "41 min ago", region: "Lucknow",
+    icon: "🚓", views: "5.3K",
+  },
+  {
+    id: 7, category: "Cybercrime", severity: "medium",
+    headline: "OTP fraud surge during festive season; police warns public",
+    source: "Indian Express", time: "55 min ago", region: "Pan-India",
+    icon: "📱", views: "8.1K",
+  },
+  {
+    id: 8, category: "Arrest", severity: "low",
+    headline: "Counterfeiting unit busted in Pune; fake notes worth ₹2L seized",
+    source: "Pune Mirror", time: "1 hr ago", region: "Pune",
+    icon: "💵", views: "1.4K",
+  },
+  {
+    id: 9, category: "Alert", severity: "high",
+    headline: "Terror threat neutralized; 4 suspected militants detained at border",
+    source: "Republic TV", time: "1.5 hr ago", region: "J&K",
+    icon: "⚠️", views: "12.4K",
+  },
+  {
+    id: 10, category: "Investigation", severity: "medium",
+    headline: "Land scam worth ₹300 crore under CBI scanner in Ahmedabad",
+    source: "Gujarat Today", time: "2 hr ago", region: "Ahmedabad",
+    icon: "🏗️", views: "2.2K",
+  },
+];
+
+const NEWS_SEVERITY_STYLES = {
+  high: { bg: "bg-rose-500/12", border: "border-rose-500/25", badge: "bg-rose-500/20 text-rose-400 border-rose-500/30", dot: "bg-rose-400" },
+  medium: { bg: "bg-amber-500/10", border: "border-amber-500/20", badge: "bg-amber-500/15 text-amber-400 border-amber-500/25", dot: "bg-amber-400" },
+  low: { bg: "bg-emerald-500/8", border: "border-emerald-500/15", badge: "bg-emerald-500/12 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400" },
+};
+
+/* ── Live News Sidebar Component ─────────────────────────── */
+function LiveCrimeNewsSidebar({ isOpen, onClose }) {
+  const [filter, setFilter] = useState("All");
+  const [newsItems, setNewsItems] = useState(CRIME_NEWS_ITEMS);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [flashId, setFlashId] = useState(null);
+  const tickerRef = useRef(null);
+
+  const categories = ["All", "Breaking", "Cybercrime", "Arrest", "Alert", "Investigation"];
+
+  const filtered = filter === "All" ? newsItems : newsItems.filter(n => n.category === filter);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      // Simulate new incoming news
+      const newItem = {
+        id: Date.now(), category: "Breaking", severity: "high",
+        headline: "Live update: Police patrol intensified across 12 districts",
+        source: "Live Feed", time: "Just now", region: "Pan-India",
+        icon: "🔴", views: "0",
+      };
+      setNewsItems(prev => [newItem, ...prev.slice(0, 9)]);
+      setFlashId(newItem.id);
+      setIsRefreshing(false);
+      setTimeout(() => setFlashId(null), 2500);
+    }, 1200);
+  };
+
+  // Auto-refresh every 45 seconds
+  useEffect(() => {
+    const t = setInterval(() => {
+      setFlashId(CRIME_NEWS_ITEMS[Math.floor(Math.random() * CRIME_NEWS_ITEMS.length)].id);
+      setTimeout(() => setFlashId(null), 2000);
+    }, 45000);
+    return () => clearInterval(t);
+  }, []);
+
+  const breakingCount = newsItems.filter(n => n.severity === "high").length;
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[190] bg-black/60 lg:hidden"
+            aria-label="Close news"
+            onClick={onClose}
+          />
+        )}
+      </AnimatePresence>
+
+      <aside
+        className={`
+          dashboard-sidebar-scroll
+          fixed z-[200] top-0 left-0 h-screen w-[min(calc(100vw-1.25rem),20rem)] shrink-0
+          flex flex-col gap-0 overflow-y-auto overflow-x-hidden
+          border-r border-white/8
+          transition-[transform,box-shadow] duration-300 ease-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 lg:static lg:z-auto lg:h-auto lg:min-h-screen lg:sticky lg:top-0 lg:self-start lg:max-h-screen lg:w-80 xl:w-[22rem] lg:min-w-72
+        `}
+        style={{
+          background: "rgba(5, 10, 22, 0.97)",
+          backdropFilter: "blur(24px)",
+          boxShadow: isOpen ? "8px 0 40px rgba(0,0,0,0.7)" : "none",
+        }}
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 px-3 pt-3 pb-2" style={{ background: "rgba(5,10,22,0.98)", backdropFilter: "blur(20px)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center shadow-lg">
+                <Newspaper size={13} className="text-white" />
+              </div>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-widest text-rose-400">Crime News</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                  <span className="text-[9px] text-slate-500">LIVE FEED</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <motion.button
+                type="button"
+                onClick={handleRefresh}
+                whileTap={{ scale: 0.9 }}
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-slate-400 hover:text-slate-200"
+                aria-label="Refresh news"
+              >
+                <RefreshCw size={12} className={isRefreshing ? "animate-spin text-rose-400" : ""} />
+              </motion.button>
+              <button
+                type="button"
+                className="lg:hidden w-7 h-7 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition"
+                onClick={onClose}
+                aria-label="Close news sidebar"
+              >
+                <X size={14} className="text-slate-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Breaking banner */}
+          <div className="rounded-lg border border-rose-500/25 bg-rose-500/8 px-2.5 py-1.5 flex items-center gap-2 mb-2">
+            <Flame size={11} className="text-rose-400 shrink-0" />
+            <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wide">{breakingCount} Breaking Alerts</span>
+            <span className="ml-auto text-[9px] text-slate-500 font-mono">Updated now</span>
+          </div>
+
+          {/* Category filter */}
+          <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setFilter(cat)}
+                className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition border ${
+                  filter === cat
+                    ? "bg-rose-500/20 border-rose-500/40 text-rose-300"
+                    : "bg-white/5 border-white/8 text-slate-500 hover:text-slate-300 hover:bg-white/8"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-white/6 mx-3" />
+
+        {/* News list */}
+        <div className="flex-1 px-2.5 py-2 flex flex-col gap-2 min-h-0">
+          {filtered.map((item, idx) => {
+            const style = NEWS_SEVERITY_STYLES[item.severity];
+            const isFlashing = flashId === item.id;
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.3 }}
+                className={`rounded-xl border p-2.5 cursor-pointer transition-all duration-300 group ${
+                  style.bg
+                } ${
+                  style.border
+                } ${
+                  isFlashing ? "ring-1 ring-rose-400/60 shadow-lg shadow-rose-500/10" : ""
+                } hover:brightness-110`}
+                onClick={() => {}}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-base shrink-0 mt-0.5">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border ${style.badge}`}>
+                        {item.category}
+                      </span>
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot} ${
+                        item.severity === "high" ? "animate-pulse" : ""
+                      }`} />
+                    </div>
+                    <p className="text-xs font-medium text-slate-200 leading-snug line-clamp-2 group-hover:text-white transition">
+                      {item.headline}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[9px] text-slate-500">{item.source}</span>
+                      <span className="text-slate-700">·</span>
+                      <span className="text-[9px] text-slate-500">{item.region}</span>
+                      <span className="text-slate-700 ml-auto">·</span>
+                      <span className="text-[9px] text-slate-500">{item.time}</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Eye size={8} className="text-slate-600" />
+                      <span className="text-[9px] text-slate-600">{item.views}</span>
+                      <ExternalLink size={8} className="text-slate-700 ml-auto opacity-0 group-hover:opacity-100 transition" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="px-3 py-2 border-t border-white/6" style={{ background: "rgba(5,10,22,0.95)" }}>
+          <div className="flex items-center gap-2 text-[9px] text-slate-600">
+            <Wifi size={9} className="text-emerald-500" />
+            <span>Connected to live crime feed</span>
+            <span className="ml-auto">India</span>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
 
 /* ── Form defaults ──────────────────────────────────────── */
 const initialForm = {
@@ -141,6 +416,7 @@ export default function DashboardPage() {
   const [mapReload, setMapReload] = useState(0);
   const [trackingTick, setTrackingTick] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newsSidebarOpen, setNewsSidebarOpen] = useState(false);
   const [mapVisible, setMapVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -207,7 +483,7 @@ export default function DashboardPage() {
     setGeoCoords(null);
     if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
     setVoiceBlob(null); setVoicePreviewUrl(""); setLastSubmitInfo(null);
-    setMapVisible(false); setSidebarOpen(false);
+    setMapVisible(false); setSidebarOpen(false); setNewsSidebarOpen(false);
     notify("Dashboard reset");
   };
 
@@ -340,9 +616,9 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Prediction panel */}
+      {/* Crime Prediction AI Panel */}
       <div className="glass-card p-3.5 shrink-0">
-        <PredictionPanel selectedState={selectedState} region={region} time={time} ampm={ampm} form={form} />
+        <CrimePredictionPanel />
       </div>
 
       {/* Report tracking */}
@@ -370,42 +646,10 @@ export default function DashboardPage() {
         onUrgent={() => notify("🚨 This seems urgent. Please use Panic button if immediate danger.", "error")}
       />
 
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[190] bg-black/60 lg:hidden"
-            aria-label="Close menu"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {/* LEFT — Live Crime News Sidebar */}
+      <LiveCrimeNewsSidebar isOpen={newsSidebarOpen} onClose={() => setNewsSidebarOpen(false)} />
 
-      {/* Left sidebar */}
-      <aside
-        className={`
-          dashboard-sidebar-scroll
-          fixed z-[200] top-0 left-0 h-screen w-[min(calc(100vw-1.25rem),21rem)] shrink-0
-          flex flex-col items-stretch gap-0 p-3 sm:p-4 overflow-y-auto overflow-x-hidden
-          border-r border-white/8
-          transition-[transform,box-shadow] duration-300 ease-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 lg:static lg:z-auto lg:h-auto lg:min-h-screen lg:sticky lg:top-0 lg:self-start lg:max-h-screen lg:w-96 xl:w-[26rem] lg:min-w-96
-        `}
-        style={{
-          background: "rgba(7, 13, 28, 0.96)",
-          backdropFilter: "blur(24px)",
-          boxShadow: sidebarOpen ? "8px 0 40px rgba(0,0,0,0.6)" : "none",
-        }}
-      >
-        {sidebarInner}
-      </aside>
-
-      {/* Right main area */}
+      {/* Center — Main content area */}
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
         {/* Header */}
         <header
@@ -417,12 +661,21 @@ export default function DashboardPage() {
         >
           <div className="max-w-[1000px] mx-auto w-full px-4 py-3 md:py-4">
             <div className="flex items-center gap-3">
-              {/* Mobile menu toggle */}
+              {/* Mobile: News sidebar toggle */}
+              <button
+                type="button"
+                className="lg:hidden p-2 rounded-xl border border-rose-500/20 bg-rose-500/8 hover:bg-rose-500/14 transition"
+                onClick={() => setNewsSidebarOpen(true)}
+                aria-label="Open news"
+              >
+                <Newspaper size={18} className="text-rose-400" />
+              </button>
+              {/* Mobile: Map & AI sidebar toggle */}
               <button
                 type="button"
                 className="lg:hidden p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/8 transition"
                 onClick={() => setSidebarOpen(true)}
-                aria-label="Open menu"
+                aria-label="Open map sidebar"
               >
                 <Menu size={18} className="text-slate-300" />
               </button>
@@ -1046,6 +1299,39 @@ export default function DashboardPage() {
           </div>
         </footer>
       </div>
+
+      {/* RIGHT — Map & AI Sidebar */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[190] bg-black/60 lg:hidden"
+            aria-label="Close map sidebar"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      <aside
+        className={`
+          dashboard-sidebar-scroll
+          fixed z-[200] top-0 right-0 h-screen w-[min(calc(100vw-1.25rem),21rem)] shrink-0
+          flex flex-col items-stretch gap-0 p-3 sm:p-4 overflow-y-auto overflow-x-hidden
+          border-l border-white/8
+          transition-[transform,box-shadow] duration-300 ease-out
+          ${sidebarOpen ? "translate-x-0" : "translate-x-full"}
+          lg:translate-x-0 lg:static lg:z-auto lg:h-auto lg:min-h-screen lg:sticky lg:top-0 lg:self-start lg:max-h-screen lg:w-96 xl:w-[26rem] lg:min-w-96
+        `}
+        style={{
+          background: "rgba(7, 13, 28, 0.96)",
+          backdropFilter: "blur(24px)",
+          boxShadow: sidebarOpen ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
+        }}
+      >
+        {sidebarInner}
+      </aside>
     </div>
   );
 }

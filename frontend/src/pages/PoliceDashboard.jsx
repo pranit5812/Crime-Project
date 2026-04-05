@@ -11,6 +11,7 @@ import {
   ChevronRight, AlertTriangle, CheckCircle2, XCircle, Search
 } from "lucide-react";
 import { Toast } from "../components/Toast";
+import { CrimePredictionPanel } from "../components/intelligence/CrimePredictionPanel";
 import { API_BASE, apiGet, apiPatch, authHeaders } from "../lib/api";
 
 /* ── Nav items ─────────────────────────────────────── */
@@ -495,6 +496,16 @@ export default function PoliceDashboard() {
               <StatCard label="Investigating" value={stats.resolving} icon={Activity}        color="sky"     sub="Active cases" />
               <StatCard label="Resolved"      value={stats.resolved}  icon={CheckCircle2}    color="emerald" sub="Closed cases" />
             </div>
+
+            {/* ── Crime Prediction AI ─────────────────── */}
+            <motion.section
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="glass-card p-4 md:p-5"
+            >
+              <CrimePredictionPanel />
+            </motion.section>
 
             {/* ── Live alerts + Map ──────────────────── */}
             <div className="grid lg:grid-cols-12 gap-4">

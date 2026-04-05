@@ -22,6 +22,7 @@ from .routers import (
     notifications_routes,
     openenv_routes,
     panic_routes,
+    predict_routes,
     realtime_routes,
     reports_routes,
 )
@@ -61,6 +62,7 @@ app.include_router(ai_routes.router)
 app.include_router(ai_routes.legacy)
 app.include_router(realtime_routes.router)
 app.include_router(panic_routes.router)
+app.include_router(predict_routes.router)
 app.include_router(chat_routes.router)
 app.include_router(notifications_routes.router)
 app.include_router(openenv_routes.router)
