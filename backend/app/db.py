@@ -2,24 +2,67 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Generator
 
 from dotenv import load_dotenv
-from pathlib import Path
 
 from sqlalchemy import Boolean, DateTime, Float, Integer, LargeBinary, String, Text, create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
-
-def _database_url() -> str:
-    load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=False)
-    return os.getenv("DATABASE_URL", "sqlite:///./crime_reports.db")
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
-DATABASE_URL = _database_url()
+def _strip_env_quotes(value: str) -> str:
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+        return v[1:-1]
+    return v
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+def _postgres_connect_from_env() -> tuple[URL, dict] | None:
+    """Build URL without embedding password (avoids URL encoding issues)."""
+    user = (os.getenv("POSTGRES_USER") or "").strip()
+    if not user or "POSTGRES_PASSWORD" not in os.environ:
+        return None
+    password = _strip_env_quotes(os.getenv("POSTGRES_PASSWORD", ""))
+    # 127.0.0.1 avoids localhost -> IPv6 (::1) vs IPv4 quirks on Windows.
+    host = (os.getenv("POSTGRES_HOST") or "127.0.0.1").strip()
+    port = int((os.getenv("POSTGRES_PORT") or "5432").strip())
+    database = (os.getenv("POSTGRES_DB") or "crime_project").strip()
+    url = URL.create(
+        drivername="postgresql+psycopg",
+        username=user,
+        host=host,
+        port=port,
+        database=database,
+    )
+    return url, {"password": password}
+
+
+def _create_engine():
+    # Always prefer values from backend/.env over inherited shell / Windows env vars.
+    load_dotenv(dotenv_path=_BACKEND_ROOT / ".env", override=True)
+    pg = _postgres_connect_from_env()
+    if pg is not None:
+        url, connect_args = pg
+        return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
+    explicit = (os.getenv("DATABASE_URL") or "").strip()
+    if explicit:
+        return create_engine(explicit, pool_pre_ping=True)
+    raise RuntimeError(
+        "PostgreSQL is required. In backend/.env set POSTGRES_USER, POSTGRES_PASSWORD, "
+        "and optionally POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB. "
+        "Then run in psql (as superuser): CREATE DATABASE crime_project; "
+        "and ensure ALTER USER ... PASSWORD matches POSTGRES_PASSWORD."
+    )
+
+
+engine = _create_engine()
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, class_=Session)
+
+DATABASE_URL = engine.url.render_as_string(hide_password=True)
 
 
 class Base(DeclarativeBase):
