@@ -1,4 +1,4 @@
-# AI-Powered Real-Time Crime Intelligence Platform
+﻿# AI-Powered Real-Time Crime Intelligence Platform
 
 Full-stack system combining **React + Tailwind**, **FastAPI**, **WebSockets**, **scikit-learn** risk models, **OpenCV** image heuristics (optional **YOLOv8**), **OpenEnv** RL evaluation hooks, and optional **OpenAI** for chat + baseline agents.
 
@@ -15,10 +15,6 @@ Full-stack system combining **React + Tailwind**, **FastAPI**, **WebSockets**, *
 │  routers: auth, analytics, reports, ai, panic, chat,         │
 │           notifications, realtime, openenv                   │
 │  services: predict (RF), image, nlp, chat, geo, notify      │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────┐
-│   PostgreSQL / SQLite (SQLAlchemy) · JWT · bcrypt            │
 └─────────────────────────────────────────────────────────────┘
 
 OpenEnv (`openenv/`): `Observation`, `Action`, `Reward` + `CrimeOpenEnv.reset/step/state`
